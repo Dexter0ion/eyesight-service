@@ -2,3 +2,6 @@
 /facedatas
 /yolodatas
 
+#local setting
+/__pycache__
+/.vscode
