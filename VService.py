@@ -15,7 +15,7 @@
         2.create ServEmail:Class to send email'
 '''
 import smtplib
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod, ABCMeta
 from email import encoders
 from email.header import Header
 from email.mime.text import MIMEText
@@ -27,7 +27,8 @@ import face_recognition
 from flask import Flask, render_template, Response, request,g
 import numpy
 import requests
-class VService():
+
+class VService(metaclass=ABCMeta):
     @abstractmethod
     def __init__(self):
         pass
@@ -217,5 +218,3 @@ class ServFlask(VService):
         #self.shutdown()
         requests.post('http://localhost:5001/shutdown')
 
-    def out(self):
-        return g.cmd

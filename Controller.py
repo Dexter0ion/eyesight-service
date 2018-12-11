@@ -17,8 +17,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from Window import MainWindow
-from VService import *
-
+#from VService import *
+from Service.ServCapture import ServCapture
+from Service.ServFlask import ServFlask 
+from Service.ServFaceRecog import ServFaceRecog
 
 class ServNet(QThread):
     servFlask = ServFlask()
