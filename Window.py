@@ -11,6 +11,7 @@ class QSwitchButton(QPushButton):
     def __init__(self, onasset, offasset):
 
         super().__init__()
+
         self.switchName = ""
         self.onasset = onasset
         self.offasset = offasset
@@ -54,6 +55,9 @@ class MainWindow(QMainWindow):
     
     def initGUI(self):
          # 读取QImage格 <MW= QImage()
+
+        
+        #self.setAttribute(Qt.WA_TranslucentBackground)
         self._pixmap = QPixmap()
         self._imgtext = ""
 
@@ -61,12 +65,13 @@ class MainWindow(QMainWindow):
         self.circleScale = 400
         self.masktype = 1
         # 界面布局
+        
         self.ilabel = QLabel()
         self.ilabel.setPixmap(self._pixmap)
 
-
-        self.layout = QHBoxLayout()
+        self.layout = QVBoxLayout()
         self.layout.addWidget(self.ilabel)
+        
 
         # Add SwitchButton
         self.switchCapture = QSwitchButton("","")
@@ -78,8 +83,9 @@ class MainWindow(QMainWindow):
         self.switchNet = QSwitchButton("","")
         self.switchNet.setSwitchName("Net")
 
-
-        self.switchSets = [self.switchCapture,self.switchFace,self.switchNet]
+        self.switchYolo = QSwitchButton("","")
+        self.switchYolo.setSwitchName("YOLO")
+        self.switchSets = [self.switchCapture,self.switchFace,self.switchNet,self.switchYolo]
 
         for switch in self.switchSets:
             switch.setFixedSize(80, 80)
@@ -88,7 +94,13 @@ class MainWindow(QMainWindow):
         self.centralWidget = QWidget()
         self.centralWidget.setLayout(self.layout)
         self.setCentralWidget(self.centralWidget)
-    
+        self.centralWidget.setAutoFillBackground(True)
+        '''
+        palette = QPalette()  
+        palette.setColor(Background, QColor(192,253,123,100))  
+
+        self.centralWidget.setPalette(palette);  
+        '''
     def updateFrame(self, imgdata):
         self._imgdata = imgdata
         self._pixmap = mask_image(self.masktype, self._imgdata, self.circleScale)

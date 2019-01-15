@@ -21,6 +21,7 @@ from Window import MainWindow
 from Service.ServCapture import ServCapture
 from Service.ServFlask import ServFlask 
 from Service.ServFaceRecog import ServFaceRecog
+from Service.ServYOLO import ServYOLO
 
 class ServNet(QThread):
     servFlask = ServFlask()
@@ -60,15 +61,15 @@ class ServEC(QThread):
         self.initServ()
 
     def initServ(self):
-        self.servCapture = ServCapture(1)
+        self.servCapture = ServCapture(0)
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
-        
+        self.servYOLO = ServYOLO()
 
         self.switchFlag['Capture'] = True
         self.switchFlag['Face'] = False
         self.switchFlag['Net'] = False
-
+        self.switchFlag['YOLO'] = False
         #print(self.servCapture)
         print(self.servFaceRecog)
     
@@ -80,6 +81,8 @@ class ServEC(QThread):
     def processFrame(self):
         if self.switchFlag['Face'] == True:
             self.servOut(self.servFaceRecog)
+        if self.switchFlag['YOLO'] == True:
+            self.servOut(self.servYOLO)
         
 
 
@@ -148,13 +151,15 @@ if __name__ == '__main__':
     sigAda.adapt(servEC.signal_QImage, ECGUI.updateFrame)
     sigAda.adapt(ECGUI.switchCapture.signal_switch,servEC.getSignal)
     sigAda.adapt(ECGUI.switchFace.signal_switch,servEC.getSignal)
+    sigAda.adapt(ECGUI.switchYolo.signal_switch,servEC.getSignal)
     sigAda.adapt(ECGUI.switchNet.signal_switch,servMana.getSignal)
+    
     '''
     for switch in ECGUI.switchSets:
         sigAda.adapt(switch.switchSignal,servEC.getSignal)
         sigAda.adapt(switch.switchSignal,servMana.getSignal)
     '''
     #show MainWindow
-    ECGUI.resize(600, 600)
+    ECGUI.resize(500, 400)
     ECGUI.show()
     app.exit(app.exec_())

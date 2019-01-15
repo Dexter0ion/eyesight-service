@@ -10,7 +10,7 @@ class ServFaceRecog():
 
     # Create arrays of known face encodings and their names
     known_face_encodings = [master_face_encoding]
-    known_face_names = ["master"]
+    known_face_names = ["ShaoBochao"]
 
     # Initialize some variables
     face_locations = []
