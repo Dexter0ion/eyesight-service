@@ -1,82 +1,70 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtPrintSupport import *
 from PyQt5.QtMultimedia import *
 from PyQt5.QtMultimediaWidgets import *
+from PyQt5.QtPrintSupport import *
+from PyQt5.QtWidgets import *
 
-class QSwitchButton(QPushButton):
-    signal_switch = pyqtSignal(dict)
-
-    def __init__(self, onasset, offasset):
-
-        super().__init__()
-
-        self.switchName = ""
-        self.onasset = onasset
-        self.offasset = offasset
-
-        #self.setStyleSheet('QPushButton{border-image:url('+self.offasset+')}')
-        # self.setStyleSheet('QPushButton{background-image:url('+self.offasset+')}')
-        self.isoff = True
-
-        self.clicked.connect(self.changeSwitchButtonImage)
-        self.clicked.connect(self.clieckedCallFunction)
-
-    def setSwitchName(self, switchName):
-        self.switchName = switchName
-        self.setText(self.switchName+"\noff")
-
-    def clieckedCallFunction(self):
-        print(self.sender().switchName+" is cliecked")
-
-    def changeSwitchButtonImage(self):
-        print("Pushbutton Image changed")
-        if self.isoff:
-            # self.setStyleSheet('QPushButton{background-image:url('+self.onasset+')}')
-            #self.setStyleSheet(    'QPushButton{border-image:url('+self.onasset+')}')
-            self.setText(self.switchName+"\non")
-            #self.switchSignal.emit("on")
-            self.signal_switch.emit({'signal_key':self.switchName,'signal_value':True})
-            self.isoff = False
-        elif self.isoff == False:
-            # self.setStyleSheet('QPushButton{background-image:url('+self.offasset+')}')
-            #self.setStyleSheet(    'QPushButton{border-image:url('+self.offasset+')}')
-            self.setText(self.switchName+"\noff")
-            #self.switchSignal.emit("off")
-            self.signal_switch.emit({'signal_key':self.switchName,'signal_value':False})
-            self.isoff = True
-    
+from Widget.QAbout import QAbout
+from Widget.QSimpleConsole import QSimpleConsole
+from Widget.QSwitchButton import QSwitchButton
+from Widget.QObjectList import QObjectList
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initGUI()
     
-    def initGUI(self):
-         # 读取QImage格 <MW= QImage()
+    #显示关于界面    
+    def displayAbout(self):
+        self.aboutDialog = QAbout(self)
+        self.aboutDialog.show()
 
-        
+        print("About")
+
+    def initGUI(self):
+        self.switchFlag = {}
+
+        #设置窗口标题
+        self.setWindowTitle('Eyesight-Service')  
+
+        #设置菜单栏
+        self.menubar = self.menuBar()
+        helpMenu = self.menubar.addMenu('Help')
+         
+        #关于
+        aboutAction = QAction('About',self)
+        aboutAction.triggered.connect(self.displayAbout)  
+        helpMenu.addAction(aboutAction)
+
         #self.setAttribute(Qt.WA_TranslucentBackground)
         self._pixmap = QPixmap()
         self._imgtext = ""
 
         # 监视屏大小
         self.circleScale = 400
-        self.masktype = 1
-        # 界面布局
+        self.switchFlag['Mask'] = False
+        #self.masktype = 1
         
+        # 界面布局
+        self.layout = QHBoxLayout()
+        # Add QLabel
         self.ilabel = QLabel()
         self.ilabel.setPixmap(self._pixmap)
-
-        self.layout = QVBoxLayout()
         self.layout.addWidget(self.ilabel)
         
+        # Add QSimple Console
+        self.console = QSimpleConsole()
+        self.layout.addWidget(self.console)
+
+        # Add ObjectList
+        self.objectList = QObjectList()
+        self.layout.addWidget(self.objectList)
 
         # Add SwitchButton
         self.switchCapture = QSwitchButton("","")
         self.switchCapture.setSwitchName("Capture")
-
+        
         self.switchFace= QSwitchButton("","")
         self.switchFace.setSwitchName("Face")
 
@@ -85,7 +73,10 @@ class MainWindow(QMainWindow):
 
         self.switchYolo = QSwitchButton("","")
         self.switchYolo.setSwitchName("YOLO")
-        self.switchSets = [self.switchCapture,self.switchFace,self.switchNet,self.switchYolo]
+
+        self.switchMask = QSwitchButton("","")
+        self.switchMask.setSwitchName("Mask")
+        self.switchSets = [self.switchCapture,self.switchFace,self.switchNet,self.switchYolo,self.switchMask]
 
         for switch in self.switchSets:
             switch.setFixedSize(80, 80)
@@ -101,9 +92,16 @@ class MainWindow(QMainWindow):
 
         self.centralWidget.setPalette(palette);  
         '''
+    
+    def getSignal(self,signal_dict):
+        print(signal_dict)
+        key = signal_dict['signal_key']
+        value = signal_dict['signal_value']
+        self.switchFlag[key] = value
+
     def updateFrame(self, imgdata):
         self._imgdata = imgdata
-        self._pixmap = mask_image(self.masktype, self._imgdata, self.circleScale)
+        self._pixmap = mask_image(self.switchFlag['Mask'], self._imgdata, self.circleScale)
         self.ilabel.setPixmap(self._pixmap)
        
     
@@ -138,9 +136,9 @@ def mask_image(masktype, imgdata, size, imgtype='jpg'):
     painter.setPen(Qt.NoPen)  # 无边框
     painter.setRenderHint(QPainter.Antialiasing, True)  # 抗锯齿
 
-    if(masktype == 0):
+    if(masktype == True):
         painter.drawEllipse(0, 0, imgsize, imgsize)  # 画圆
-    elif(masktype == 1):
+    elif(masktype == False):
         painter.drawRect(0, 0, imgsize, imgsize)
     painter.end()  # segfault if you forget this
 

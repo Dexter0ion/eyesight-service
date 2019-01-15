@@ -16,6 +16,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import qtmodern.styles
+import qtmodern.windows
+
 from Window import MainWindow
 #from VService import *
 from Service.ServCapture import ServCapture
@@ -140,8 +143,11 @@ class SignalAdapter():
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ECGUI = MainWindow()
+    qtmodern.styles.dark(app)
+    #qtmodern.styles._apply_base_theme(app)
 
+    ECGUI = MainWindow()
+    #ECGUI = qtmodern.windows.ModernWindow(MainWindow())
     servEC = ServEC()
     servEC.start()
     
@@ -152,6 +158,7 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.switchCapture.signal_switch,servEC.getSignal)
     sigAda.adapt(ECGUI.switchFace.signal_switch,servEC.getSignal)
     sigAda.adapt(ECGUI.switchYolo.signal_switch,servEC.getSignal)
+    sigAda.adapt(ECGUI.switchMask.signal_switch,ECGUI.getSignal)
     sigAda.adapt(ECGUI.switchNet.signal_switch,servMana.getSignal)
     
     '''

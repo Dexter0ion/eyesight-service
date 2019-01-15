@@ -1,6 +1,7 @@
 #datas
 /facedatas
 /yolodatas
+/objectdatas
 
 #local setting
 /__pycache__
