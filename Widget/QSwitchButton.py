@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import QObject, pyqtSignal
 
+
 class QSwitchButton(QPushButton):
     signal_switch = pyqtSignal(dict)
 
@@ -21,25 +22,30 @@ class QSwitchButton(QPushButton):
 
     def setSwitchName(self, switchName):
         self.switchName = switchName
-        self.setText(self.switchName+"\noff")
+        self.setText(self.switchName + "\noff")
 
     def clieckedCallFunction(self):
-        print(self.sender().switchName+" is cliecked")
+        print(self.sender().switchName + " is cliecked")
 
     def changeSwitchButtonImage(self):
         print("Pushbutton Image changed")
         if self.isoff:
             # self.setStyleSheet('QPushButton{background-image:url('+self.onasset+')}')
             #self.setStyleSheet(    'QPushButton{border-image:url('+self.onasset+')}')
-            self.setText(self.switchName+"\non")
+            self.setText(self.switchName + "\non")
             #self.switchSignal.emit("on")
-            self.signal_switch.emit({'signal_key':self.switchName,'signal_value':True})
+            self.signal_switch.emit({
+                'signal_key': self.switchName,
+                'signal_value': True
+            })
             self.isoff = False
         elif self.isoff == False:
             # self.setStyleSheet('QPushButton{background-image:url('+self.offasset+')}')
             #self.setStyleSheet(    'QPushButton{border-image:url('+self.offasset+')}')
-            self.setText(self.switchName+"\noff")
+            self.setText(self.switchName + "\noff")
             #self.switchSignal.emit("off")
-            self.signal_switch.emit({'signal_key':self.switchName,'signal_value':False})
+            self.signal_switch.emit({
+                'signal_key': self.switchName,
+                'signal_value': False
+            })
             self.isoff = True
-    

@@ -22,14 +22,16 @@ import qtmodern.windows
 from Window import MainWindow
 #from VService import *
 from Service.ServCapture import ServCapture
-from Service.ServFlask import ServFlask 
+from Service.ServFlask import ServFlask
 from Service.ServFaceRecog import ServFaceRecog
 from Service.ServYOLO import ServYOLO
+
 
 class ServNet(QThread):
     servFlask = ServFlask()
     signal_netcmd = pyqtSignal(str)
     netcmd = "NOCMD"
+
     def run(self):
         print("[开启]Flask服务器线程")
         self.servFlask.run()
@@ -37,12 +39,11 @@ class ServNet(QThread):
         if self.netcmd != "NOCMD":
             self.signal_netcmd.emit(self.netcmd)
             self.servFlask.getin("NOCMD")
-        
 
     def stop(self):
         print('[关闭]Flask服务器')
         self.servFlask.stop()
-    
+
     '''
     def updateFrame(self, imgdata):
             #print("更新服务器画面帧")
@@ -54,6 +55,8 @@ class ServNet(QThread):
             s = swsignal
             print(s)
     '''
+
+
 class ServEC(QThread):
     signal_QImage = pyqtSignal(QImage)
 
@@ -75,8 +78,8 @@ class ServEC(QThread):
         self.switchFlag['YOLO'] = False
         #print(self.servCapture)
         print(self.servFaceRecog)
-    
-    def servOut(self,serv):
+
+    def servOut(self, serv):
         serv.getin(self._frame)
         serv.process()
         self._frame = serv.out()
@@ -86,16 +89,14 @@ class ServEC(QThread):
             self.servOut(self.servFaceRecog)
         if self.switchFlag['YOLO'] == True:
             self.servOut(self.servYOLO)
-        
 
-
-    def getSignal(self,signal_dict):
+    def getSignal(self, signal_dict):
         print(signal_dict)
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
         self.switchFlag[key] = value
         #print("key:"+key+" value:"+value)
-        
+
     def run(self):
         while self.servCapture.isOpened():
             if self.switchFlag['Capture'] == True:
@@ -105,7 +106,7 @@ class ServEC(QThread):
 
                 self._frame_QImage = self.cvtNdarry2QImage(self._frame)
                 self.signal_QImage.emit(self._frame_QImage)
-        
+
     def cvtNdarry2QImage(self, ndarray):
         # in this class ndarry meands frame capture image
         vframe = ndarray
@@ -118,20 +119,22 @@ class ServEC(QThread):
                       QImage.Format_RGB888)
         return qimg
 
+
 class ServMana():
     servNet = ServNet()
     switchFlag = {}
 
-    def getSignal(self,signal_dict):
+    def getSignal(self, signal_dict):
         print(signal_dict)
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
         self.switchFlag[key] = value
-        
+
         if self.switchFlag['Net'] == True:
             self.servNet.start()
         elif self.switchFlag['Net'] == False:
             self.servNet.stop()
+
 
 class SignalAdapter():
     def __init__(self):
@@ -150,17 +153,16 @@ if __name__ == '__main__':
     #ECGUI = qtmodern.windows.ModernWindow(MainWindow())
     servEC = ServEC()
     servEC.start()
-    
+
     servMana = ServMana()
-      
+
     sigAda = SignalAdapter()
     sigAda.adapt(servEC.signal_QImage, ECGUI.updateFrame)
-    sigAda.adapt(ECGUI.switchCapture.signal_switch,servEC.getSignal)
-    sigAda.adapt(ECGUI.switchFace.signal_switch,servEC.getSignal)
-    sigAda.adapt(ECGUI.switchYolo.signal_switch,servEC.getSignal)
-    sigAda.adapt(ECGUI.switchMask.signal_switch,ECGUI.getSignal)
-    sigAda.adapt(ECGUI.switchNet.signal_switch,servMana.getSignal)
-    
+    sigAda.adapt(ECGUI.switchCapture.signal_switch, servEC.getSignal)
+    sigAda.adapt(ECGUI.switchFace.signal_switch, servEC.getSignal)
+    sigAda.adapt(ECGUI.switchYolo.signal_switch, servEC.getSignal)
+    sigAda.adapt(ECGUI.switchMask.signal_switch, ECGUI.getSignal)
+    sigAda.adapt(ECGUI.switchNet.signal_switch, servMana.getSignal)
     '''
     for switch in ECGUI.switchSets:
         sigAda.adapt(switch.switchSignal,servEC.getSignal)

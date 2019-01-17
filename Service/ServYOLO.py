@@ -6,6 +6,7 @@ import sys
 import cv2 as cv
 import numpy as np
 
+
 class ServYOLO():
     # Initialize the parameters
     confThreshold = 0.5  # Confidence threshold
@@ -13,7 +14,7 @@ class ServYOLO():
     inpWidth = 416  # Width of network's input image
     inpHeight = 416  # Height of network's input image
 
-    isWriteEnable = False
+    isWriteEnable = True
     '''
     parser = argparse.ArgumentParser(description='Object Detection using YOLO in OPENCV')
     parser.add_argument('--image', help='Path to image file.')
@@ -45,27 +46,30 @@ class ServYOLO():
     def __str__(self):
         return "ServYOLO:Service-YOLO-ObjectDetect"
 
-    def getin(self,frame):
+    def getin(self, frame):
         self.inframe = frame
 
     def process(self):
         self.outframe = self.procxFrame(self.inframe)
-        
 
     def out(self):
         return self.outframe
-    
+
     # Write to det.txt file
     def write2txt(imgname, classname, left, top, right, bottom):
         det = open('det.txt', 'a')
-        det.write(imgname+"\n"+classname+"\n"+str(left)+" " +
-                  str(top)+" "+str(right)+" "+str(bottom)+"\n")
+        det.write(imgname + "\n" + classname + "\n" + str(left) + " " +
+                  str(top) + " " + str(right) + " " + str(bottom) + "\n")
         det.close()
 
     # Write to det.json file
     def write2json(imgname, classname, left, top, right, bottom):
-        data = dict(catagory=classname, timestamp=1000, socre=0,
-                    name=imgname, bbox=[left, top, right, bottom])
+        data = dict(
+            catagory=classname,
+            timestamp=1000,
+            socre=0,
+            name=imgname,
+            bbox=[left, top, right, bottom])
         datajson = json.dumps(data)
 
         f = open('det.json', 'a')
@@ -96,57 +100,53 @@ class ServYOLO():
 
         # Get the label for the class name and its confidence
         if self.classes:
-            assert(classId < len(self.classes))
+            assert (classId < len(self.classes))
             label = '%s:%s' % (self.classes[classId], label)
 
         #Display the label at the top of the bounding box
-        labelSize, baseLine = cv.getTextSize(
-            label, cv.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+
+        labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX,
+                                             0.5, 1)
         top = max(top, labelSize[1])
-        
-        if self.isWriteEnable == True:
-            baseline = 0
-            refTop = top+baseline
-            refBot = bottom-baseline
-            refLeft = left+baseline
-            refRight = right-baseline
 
-
-            try:
-                ref  = cv.resize(frame[refTop:bottom,refLeft:refRight],(refRight-refLeft,bottom-refTop))
-            except:
-                print("resize error")
-            else:
-                print("object resized")
-                cv.imwrite('./objectdatas/%s.jpg' %(label), ref)
-
+    
         #Draw Prediction
-        cv.rectangle(frame, (left, top - round(1.5*labelSize[1])), (left + round(
-            1.5*labelSize[0]), top + baseLine), (255, 255, 255), cv.FILLED)
-        
-        cv.putText(frame, label, (left, top),
-                   cv.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 0), 1)
-        
+        # id box
+        cv.rectangle(frame, (left, top + labelSize[1]*3),
+                     (right, top),
+                     (255, 178, 50), cv.FILLED)
         '''
-        if self.isWriteEnable == True:
-            refTop = top-round(1.5*labelSize[1])
-            refLeft = left
-            refRight = right+round(1.5*labelSize[0])
+        cv.rectangle(frame, (left, top + round(1.5 * labelSize[1])),
+                     (left + round(1.5 * labelSize[0]), top + baseLine),
+                     (255, 255, 255), cv.FILLED)
+        '''
+        # id name
+        font = cv.FONT_HERSHEY_DUPLEX
+        cv.putText(frame, label, (left, top + labelSize[1]*2),
+                   font, 0.5, (255, 255, 255), 1)
 
-            try:
-                ref  = cv.resize(frame[refTop:bottom,refLeft:refRight],(refRight-refLeft,bottom-refTop))
-            except:
-                print("resize error")
-            else:
-                print("object resized")
-                cv.imwrite('./objectdatas/%s.jpg' %(label), ref)
-        '''
-    def switchEnable(self,ename,estatus):
+        if self.isWriteEnable == True:
+                    baseline = 0
+                    refTop = top + baseline
+                    refBot = bottom - baseline
+                    refLeft = left + baseline
+                    refRight = right - baseline
+
+                    try:
+                        #ref = cv.resize(frame[refTop:bottom, refLeft:refRight],
+                        #                (refRight - refLeft, bottom - refTop))
+                        ref = cv.resize(frame[top:bottom,left:right],(right-left,bottom-top))
+                    except:
+                        print("resize error")
+                    else:
+                        
+                        cv.imwrite('./objectdatas/%s.jpg' % (label), ref)
+                        print("object resized-write2file")
+
+    def switchEnable(self, ename, estatus):
         print(ename)
         if ename == 'writePred':
             self.isWriteEnable = estatus
-        
-
 
     def postprocess(self, frame, outs):
         frameHeight = frame.shape[0]
@@ -179,8 +179,8 @@ class ServYOLO():
 
         # Perform non maximum suppression to eliminate redundant overlapping boxes with
         # lower confidences.
-        indices = cv.dnn.NMSBoxes(
-            boxes, confidences, self.confThreshold, self.nmsThreshold)
+        indices = cv.dnn.NMSBoxes(boxes, confidences, self.confThreshold,
+                                  self.nmsThreshold)
         for i in indices:
             i = i[0]
             box = boxes[i]
@@ -189,8 +189,8 @@ class ServYOLO():
             width = box[2]
             height = box[3]
             self.cntClassIds[classIds[i]] += 1
-            self.drawPred(
-                frame, classIds[i], confidences[i], left, top, left + width, top + height)
+            self.drawPred(frame, classIds[i], confidences[i], left, top,
+                          left + width, top + height)
 
         #print("classes len:"+str(len(self.classes)))
         for id, cnt in enumerate(self.cntClassIds):
@@ -202,7 +202,10 @@ class ServYOLO():
     def procxFrame(self, frame):
         # Create a 4D blob from a frame.
         blob = cv.dnn.blobFromImage(
-            frame, 1/255, (self.inpWidth, self.inpHeight), [0, 0, 0], 1, crop=False)
+            frame,
+            1 / 255, (self.inpWidth, self.inpHeight), [0, 0, 0],
+            1,
+            crop=False)
 
         # Sets the input to the network
         self.net.setInput(blob)
@@ -217,6 +220,6 @@ class ServYOLO():
         t, _ = self.net.getPerfProfile()
         label = 'Inference time: %.2f ms' % (
             t * 1000.0 / cv.getTickFrequency())
-        cv.putText(frame, label, (0, 15),
-                   cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        font = cv.FONT_HERSHEY_DUPLEX
+        cv.putText(frame, label, (0, 15), font, 0.5, (0, 255, 0))
         return frame

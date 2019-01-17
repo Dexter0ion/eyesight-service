@@ -2,7 +2,7 @@
 /facedatas
 /yolodatas
 /objectdatas
-
+/objectdatas_old
 #local setting
 /__pycache__
 /.vscode
