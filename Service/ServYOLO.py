@@ -6,7 +6,7 @@ import sys
 import cv2 as cv
 import numpy as np
 
-
+from Service.ServHttp import ServHttp
 class ServYOLO():
     # Initialize the parameters
     confThreshold = 0.5  # Confidence threshold
@@ -14,7 +14,6 @@ class ServYOLO():
     inpWidth = 416  # Width of network's input image
     inpHeight = 416  # Height of network's input image
 
-    isWriteEnable = True
     '''
     parser = argparse.ArgumentParser(description='Object Detection using YOLO in OPENCV')
     parser.add_argument('--image', help='Path to image file.')
@@ -42,6 +41,9 @@ class ServYOLO():
     def __init__(self):
         self.inframe = None
         self.outframe = None
+        self.switchFlag = {}
+        self.switchFlag['CutObj'] = False
+        self.switchFlag['PostObj'] = False
 
     def __str__(self):
         return "ServYOLO:Service-YOLO-ObjectDetect"
@@ -125,23 +127,32 @@ class ServYOLO():
         cv.putText(frame, label, (left, top + labelSize[1]*2),
                    font, 0.5, (255, 255, 255), 1)
 
-        if self.isWriteEnable == True:
-                    baseline = 0
-                    refTop = top + baseline
-                    refBot = bottom - baseline
-                    refLeft = left + baseline
-                    refRight = right - baseline
+        if self.switchFlag['CutObj'] == True:
+            baseline = 0
+            refTop = top + baseline
+            refBot = bottom - baseline
+            refLeft = left + baseline
+            refRight = right - baseline
+            try:
+                self.obj_singlecut = cv.resize(frame[top:bottom,left:right],(right-left,bottom-top))
+            except:
+                print("resize error")
+            else:
+                cv.imwrite('./objectdatas/%s.jpg' % (label), self.obj_singlecut)
+                print("object resized-write2file")
 
-                    try:
-                        #ref = cv.resize(frame[refTop:bottom, refLeft:refRight],
-                        #                (refRight - refLeft, bottom - refTop))
-                        ref = cv.resize(frame[top:bottom,left:right],(right-left,bottom-top))
-                    except:
-                        print("resize error")
-                    else:
-                        
-                        cv.imwrite('./objectdatas/%s.jpg' % (label), ref)
-                        print("object resized-write2file")
+        if self.switchFlag['PostObj'] == True:
+            print("传输单张目标裁剪")
+            post_singlecut = ServHttp('POST','http://127.0.0.1:5000/api/objectdatas',self.obj_singlecut.tolist())
+            post_singlecut.process()
+            print("传输完成")
+            
+
+    def getSignal(self, signal_dict):
+        print(signal_dict)
+        key = signal_dict['signal_key']
+        value = signal_dict['signal_value']
+        self.switchFlag[key] = value
 
     def switchEnable(self, ename, estatus):
         print(ename)

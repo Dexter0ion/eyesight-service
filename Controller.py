@@ -163,6 +163,8 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.switchYolo.signal_switch, servEC.getSignal)
     sigAda.adapt(ECGUI.switchMask.signal_switch, ECGUI.getSignal)
     sigAda.adapt(ECGUI.switchNet.signal_switch, servMana.getSignal)
+    sigAda.adapt(ECGUI.switchCutObj.signal_switch, servEC.servYOLO.getSignal)
+    sigAda.adapt(ECGUI.switchPostObj.signal_switch, servEC.servYOLO.getSignal)
     '''
     for switch in ECGUI.switchSets:
         sigAda.adapt(switch.switchSignal,servEC.getSignal)
