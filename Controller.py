@@ -25,7 +25,7 @@ from Service.ServCapture import ServCapture
 from Service.ServFlask import ServFlask
 from Service.ServFaceRecog import ServFaceRecog
 from Service.ServYOLO import ServYOLO
-
+from Service.ServUDP import ServUDP
 
 class ServNet(QThread):
     servFlask = ServFlask()
@@ -71,11 +71,13 @@ class ServEC(QThread):
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
         self.servYOLO = ServYOLO()
-
+        self.servUDP = ServUDP('127.0.0.1',1082)
         self.switchFlag['Capture'] = True
         self.switchFlag['Face'] = False
         self.switchFlag['Net'] = False
         self.switchFlag['YOLO'] = False
+        self.switchFlag['UDPLive'] = False
+
         #print(self.servCapture)
         print(self.servFaceRecog)
 
@@ -89,6 +91,9 @@ class ServEC(QThread):
             self.servOut(self.servFaceRecog)
         if self.switchFlag['YOLO'] == True:
             self.servOut(self.servYOLO)
+        if self.switchFlag['UDPLive'] == True:
+            self.servUDP.getin(self._frame)
+            self.servUDP.process()
 
     def getSignal(self, signal_dict):
         print(signal_dict)
@@ -165,6 +170,7 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.switchNet.signal_switch, servMana.getSignal)
     sigAda.adapt(ECGUI.switchCutObj.signal_switch, servEC.servYOLO.getSignal)
     sigAda.adapt(ECGUI.switchPostObj.signal_switch, servEC.servYOLO.getSignal)
+    sigAda.adapt(ECGUI.switchUDPLive.signal_switch, servEC.getSignal)
     '''
     for switch in ECGUI.switchSets:
         sigAda.adapt(switch.switchSignal,servEC.getSignal)

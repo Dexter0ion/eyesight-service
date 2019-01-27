@@ -83,9 +83,13 @@ class MainWindow(QMainWindow):
 
         self.switchPostObj = QSwitchButton("","")
         self.switchPostObj.setSwitchName("PostObj")
+        
+        self.switchUDPLive = QSwitchButton("","")
+        self.switchUDPLive.setSwitchName("UDPLive")
+
         self.switchSets = [
             self.switchCapture, self.switchFace, self.switchNet,
-            self.switchYolo, self.switchMask, self.switchCutObj,self.switchPostObj
+            self.switchYolo, self.switchMask, self.switchCutObj,self.switchPostObj,self.switchUDPLive
         ]
 
         for switch in self.switchSets:
