@@ -5,15 +5,16 @@ import sys
 
 import cv2 as cv
 import numpy as np
-
+import json
 from Service.ServHttp import ServHttp
+
+
 class ServYOLO():
     # Initialize the parameters
     confThreshold = 0.5  # Confidence threshold
     nmsThreshold = 0.4  # Non-maximum suppression threshold
     inpWidth = 416  # Width of network's input image
     inpHeight = 416  # Height of network's input image
-
     '''
     parser = argparse.ArgumentParser(description='Object Detection using YOLO in OPENCV')
     parser.add_argument('--image', help='Path to image file.')
@@ -111,11 +112,9 @@ class ServYOLO():
                                              0.5, 1)
         top = max(top, labelSize[1])
 
-    
         #Draw Prediction
         # id box
-        cv.rectangle(frame, (left, top + labelSize[1]*3),
-                     (right, top),
+        cv.rectangle(frame, (left, top + labelSize[1] * 3), (right, top),
                      (255, 178, 50), cv.FILLED)
         '''
         cv.rectangle(frame, (left, top + round(1.5 * labelSize[1])),
@@ -124,8 +123,8 @@ class ServYOLO():
         '''
         # id name
         font = cv.FONT_HERSHEY_DUPLEX
-        cv.putText(frame, label, (left, top + labelSize[1]*2),
-                   font, 0.5, (255, 255, 255), 1)
+        cv.putText(frame, label, (left, top + labelSize[1] * 2), font, 0.5,
+                   (255, 255, 255), 1)
 
         if self.switchFlag['CutObj'] == True:
             baseline = 0
@@ -134,19 +133,23 @@ class ServYOLO():
             refLeft = left + baseline
             refRight = right - baseline
             try:
-                self.obj_singlecut = cv.resize(frame[top:bottom,left:right],(right-left,bottom-top))
+                self.obj_singlecut = cv.resize(frame[top:bottom, left:right],
+                                               (right - left, bottom - top))
             except:
                 print("resize error")
             else:
-                cv.imwrite('./objectdatas/%s.jpg' % (label), self.obj_singlecut)
+                cv.imwrite('./objectdatas/%s.jpg' % (label),
+                           self.obj_singlecut)
                 print("object resized-write2file")
 
+        # 传输单张图片 改成传输文件夹内增量图片
         if self.switchFlag['PostObj'] == True:
             print("传输单张目标裁剪")
-            post_singlecut = ServHttp('POST','http://127.0.0.1:5000/api/objectdatas',self.obj_singlecut.tolist())
+            post_singlecut = ServHttp('POST',
+                                      'http://127.0.0.1:5000/api/objectdatas',
+                                      self.obj_singlecut.tolist())
             post_singlecut.process()
             print("传输完成")
-            
 
     def getSignal(self, signal_dict):
         print(signal_dict)
@@ -202,13 +205,35 @@ class ServYOLO():
             self.cntClassIds[classIds[i]] += 1
             self.drawPred(frame, classIds[i], confidences[i], left, top,
                           left + width, top + height)
-
+        '''
+        输出目标检测id信息
+        Id:0,Name:person,Cnt:1
+        
+        加入数组并以JSON格式传输
+        {"idlist": [{"id": 0, "name": "person", "cnt": 1}, {"id": 72, "name": "refrigerator", "cnt": 1}]}
+        '''
         #print("classes len:"+str(len(self.classes)))
+
+        classIdDict = {"idlist": []}
         for id, cnt in enumerate(self.cntClassIds):
             if cnt != 0:
                 print("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
+                tmpIdDict = {"id": id, "name": self.classes[id], "cnt": cnt}
+                classIdDict["idlist"].append(tmpIdDict)
                 #self.msgSender.sendMessage("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
             self.cntClassIds[id] = 0
+        classIdJson = json.dumps(classIdDict)
+        print(classIdJson)
+
+        post_classid = ServHttp('POST','http://127.0.0.1:5000/api/classid',classIdDict)
+        try:
+            post_classid.process()
+        except:
+            print("传输失败")
+        else:
+            print("传输成功")
+
+        
 
     def procxFrame(self, frame):
         # Create a 4D blob from a frame.

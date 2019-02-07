@@ -177,10 +177,17 @@ class ServObjectDetectYOLO():
                 frame, classIds[i], confidences[i], left, top, left + width, top + height)
 
         #print("classes len:"+str(len(self.classes)))
+        '''
+        输出目标检测id信息
+        Id:0,Name:person,Cnt:1
+        
+        加入数组并以JSON格式传输
+        '''
         for id, cnt in enumerate(self.cntClassIds):
             if cnt != 0:
                 print("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
                 self.msgSender.sendMessage("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
+
             self.cntClassIds[id] = 0
 
     def procxFrame(self, frame):
