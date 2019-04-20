@@ -26,6 +26,7 @@ from Service.ServFlask import ServFlask
 from Service.ServFaceRecog import ServFaceRecog
 from Service.ServYOLO import ServYOLO
 from Service.ServUDP import ServUDP
+from Service.ServFaceRecogLBPH import ServFaceRecogLBPH
 
 class ServNet(QThread):
     servFlask = ServFlask()
@@ -70,6 +71,7 @@ class ServEC(QThread):
         self.servCapture = ServCapture(0)
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
+        self.servFaceRecogLBPH = ServFaceRecogLBPH()
         self.servYOLO = ServYOLO()
         self.servUDP = ServUDP('127.0.0.1',1082)
         self.switchFlag['Capture'] = True
@@ -80,6 +82,7 @@ class ServEC(QThread):
 
         #print(self.servCapture)
         print(self.servFaceRecog)
+        print(self.servFaceRecogLBPH)
 
     def servOut(self, serv):
         serv.getin(self._frame)
@@ -103,14 +106,23 @@ class ServEC(QThread):
         #print("key:"+key+" value:"+value)
 
     def run(self):
+        
         while self.servCapture.isOpened():
             if self.switchFlag['Capture'] == True:
+                
                 self.servCapture.process()
                 self._frame = self.servCapture.out()
                 self.processFrame()
 
                 self._frame_QImage = self.cvtNdarry2QImage(self._frame)
                 self.signal_QImage.emit(self._frame_QImage)
+    def stop(self):
+        self.servCapture.releaseCamera()
+    def restart(self):
+        self.servCapture.releaseCamera()
+        self.servCapture.setCamera(0)
+                
+            
 
     def cvtNdarry2QImage(self, ndarray):
         # in this class ndarry meands frame capture image
@@ -125,20 +137,30 @@ class ServEC(QThread):
         return qimg
 
 
-class ServMana():
+class ThreadManager():
     servNet = ServNet()
-    switchFlag = {}
+    servEC = ServEC()
+    switchFlag ={}
 
     def getSignal(self, signal_dict):
+        print("[Thread Signal]")
         print(signal_dict)
+        
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
         self.switchFlag[key] = value
 
+        
+        if self.switchFlag['EC'] == True:
+            self.servEC.start()
+            #self.servEC.restart()
+        if self.switchFlag['EC'] == False:
+            self.servEC.stop()
         if self.switchFlag['Net'] == True:
             self.servNet.start()
-        elif self.switchFlag['Net'] == False:
+        if self.switchFlag['Net'] == False:
             self.servNet.stop()
+        
 
 
 class SignalAdapter():
@@ -156,21 +178,26 @@ if __name__ == '__main__':
 
     ECGUI = MainWindow()
     #ECGUI = qtmodern.windows.ModernWindow(MainWindow())
-    servEC = ServEC()
-    servEC.start()
+    #servEC = ServEC()
+    #servEC.start()
 
-    servMana = ServMana()
+    thdm = ThreadManager()
 
     sigAda = SignalAdapter()
-    sigAda.adapt(servEC.signal_QImage, ECGUI.updateFrame)
-    sigAda.adapt(ECGUI.switchCapture.signal_switch, servEC.getSignal)
-    sigAda.adapt(ECGUI.switchFace.signal_switch, servEC.getSignal)
-    sigAda.adapt(ECGUI.switchYolo.signal_switch, servEC.getSignal)
+    sigAda.adapt(ECGUI.switchNet.signal_switch, thdm.getSignal)
+    sigAda.adapt(ECGUI.switchEC.signal_switch, thdm.getSignal)
+    
+    sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
+    sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.updateFrame)
+    
+    sigAda.adapt(ECGUI.switchCapture.signal_switch, thdm.servEC.getSignal)
+    sigAda.adapt(ECGUI.switchFace.signal_switch, thdm.servEC.getSignal)
+    sigAda.adapt(ECGUI.switchYolo.signal_switch, thdm.servEC.getSignal)
     sigAda.adapt(ECGUI.switchMask.signal_switch, ECGUI.getSignal)
-    sigAda.adapt(ECGUI.switchNet.signal_switch, servMana.getSignal)
-    sigAda.adapt(ECGUI.switchCutObj.signal_switch, servEC.servYOLO.getSignal)
-    sigAda.adapt(ECGUI.switchPostObj.signal_switch, servEC.servYOLO.getSignal)
-    sigAda.adapt(ECGUI.switchUDPLive.signal_switch, servEC.getSignal)
+
+    sigAda.adapt(ECGUI.switchCutObj.signal_switch, thdm.servEC.servYOLO.getSignal)
+    sigAda.adapt(ECGUI.switchPostObj.signal_switch, thdm.servEC.servYOLO.getSignal)
+    sigAda.adapt(ECGUI.switchUDPLive.signal_switch, thdm.servEC.getSignal)
     '''
     for switch in ECGUI.switchSets:
         sigAda.adapt(switch.switchSignal,servEC.getSignal)

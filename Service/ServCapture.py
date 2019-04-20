@@ -5,11 +5,8 @@ class ServCapture():
     camera_cv = None
     frame = None
 
-    def __init__(self, *camera_index):
-        if len(camera_index) != 0:
-            self.camera_cv = cv2.VideoCapture(camera_index[0])
-        else:
-            self.camera_cv = cv2.VideoCapture(0)
+    def __init__(self, camera_index):
+        self.setCamera(camera_index)
     
 
     def __str__(self):
@@ -22,5 +19,20 @@ class ServCapture():
     def out(self):
         return self.frame
 
+    def setCamera(self,camera_index):
+        '''
+        if len(camera_index) != 0:
+            self.camera_cv = cv2.VideoCapture(camera_index[0])
+        else:
+        '''
+        self.camera_cv = cv2.VideoCapture(camera_index)
+    
+    def returnCamera(self):
+        return self.camera_cv
+
+    def releaseCamera(self):
+        self.camera_cv.release()
+        
     def isOpened(self):
         return self.camera_cv.isOpened()
+    

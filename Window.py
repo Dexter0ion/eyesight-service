@@ -9,13 +9,15 @@ from Widget.QAbout import QAbout
 from Widget.QSimpleConsole import QSimpleConsole
 from Widget.QSwitchButton import QSwitchButton
 from Widget.QObjectList import QObjectList
-
+from WindowLBPH import WindowLBPH
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        #LBPH视窗
+        self.windowLBPH = WindowLBPH()
         self.initGUI()
-
+        
     #显示关于界面
     def displayAbout(self):
         self.aboutDialog = QAbout(self)
@@ -23,21 +25,31 @@ class MainWindow(QMainWindow):
 
         print("About")
 
+    def displayLBPH(self):
+        self.windowLBPH.show()
+        print("Window LBPH")
+
     def initGUI(self):
         self.switchFlag = {}
 
+        
         #设置窗口标题
         self.setWindowTitle('Eyesight-Service')
 
         #设置菜单栏
         self.menubar = self.menuBar()
         helpMenu = self.menubar.addMenu('Help')
+        LBPHMenu = self.menubar.addMenu('LBPH')
 
         #关于
         aboutAction = QAction('About', self)
         aboutAction.triggered.connect(self.displayAbout)
         helpMenu.addAction(aboutAction)
 
+        #LBPH视窗
+        LBPHAction = QAction('LBPH FaceRecog', self)
+        LBPHAction.triggered.connect(self.displayLBPH)
+        LBPHMenu.addAction(LBPHAction)
         #self.setAttribute(Qt.WA_TranslucentBackground)
         self._pixmap = QPixmap()
         self._imgtext = ""
@@ -63,6 +75,9 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.objectList)
 
         # Add SwitchButton
+        self.switchEC = QSwitchButton("", "")
+        self.switchEC.setSwitchName("EC")
+
         self.switchCapture = QSwitchButton("", "")
         self.switchCapture.setSwitchName("Capture")
 
@@ -88,7 +103,7 @@ class MainWindow(QMainWindow):
         self.switchUDPLive.setSwitchName("UDPLive")
 
         self.switchSets = [
-            self.switchCapture, self.switchFace, self.switchNet,
+            self.switchEC,self.switchCapture, self.switchFace, self.switchNet,
             self.switchYolo, self.switchMask, self.switchCutObj,self.switchPostObj,self.switchUDPLive
         ]
 
