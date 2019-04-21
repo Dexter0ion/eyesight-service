@@ -9,13 +9,27 @@ from Widget.QAbout import QAbout
 from Widget.QSimpleConsole import QSimpleConsole
 from Widget.QSwitchButton import QSwitchButton
 from Widget.QObjectList import QObjectList
+from Service.ServFaceRecogLBPH import ServFaceRecogLBPH
+
 
 
 class WindowLBPH(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.camera = None
+        
+        self.servFaceRecogLBPH = ServFaceRecogLBPH()
         self.initGUI()
-
+        
+    
+    def generateFaceData(self):
+        self.facename="test"
+        self.faceid="0"
+        print("[generate data]")
+        self.servFaceRecogLBPH.generateFaceData(self.facename,self.faceid)
+    
+    def trainFaceModel(self):
+        self.servFaceRecogLBPH.trainFaceModel()
 
     def initGUI(self):
         self.switchFlag = {}
@@ -39,10 +53,7 @@ class WindowLBPH(QMainWindow):
         self.switchTrain = QSwitchButton("", "")
         self.switchTrain.setSwitchName("Train")
 
-
-        self.switchSets = [
-            self.switchGenerate,self.switchTrain
-        ]
+        self.switchSets = [self.switchGenerate, self.switchTrain]
 
         for switch in self.switchSets:
             switch.setFixedSize(80, 80)
@@ -69,13 +80,9 @@ class WindowLBPH(QMainWindow):
         self._imgdata = imgdata
         self._pixmap = self.imgdata2QImage(self._imgdata)
         self.ilabel.setPixmap(self._pixmap)
-    
-    def imgdata2QImage(self,imgdata):
+
+    def imgdata2QImage(self, imgdata):
         image = imgdata
         image.convertToFormat(QImage.Format_ARGB32)
-        image=QPixmap.fromImage(image)
+        image = QPixmap.fromImage(image)
         return image
-
-
-
-

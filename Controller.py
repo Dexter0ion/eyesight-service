@@ -68,7 +68,7 @@ class ServEC(QThread):
         self.initServ()
 
     def initServ(self):
-        self.servCapture = ServCapture(0)
+        self.servCapture = ServCapture()
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
         self.servFaceRecogLBPH = ServFaceRecogLBPH()
@@ -152,7 +152,9 @@ class ThreadManager():
 
         
         if self.switchFlag['EC'] == True:
+            self.servEC.servCapture.setCamera(0)
             self.servEC.start()
+            
             #self.servEC.restart()
         if self.switchFlag['EC'] == False:
             self.servEC.stop()
@@ -187,7 +189,11 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.switchNet.signal_switch, thdm.getSignal)
     sigAda.adapt(ECGUI.switchEC.signal_switch, thdm.getSignal)
     
-    sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
+    #LBPH WINDOW
+    sigAda.adapt(ECGUI.windowLBPH.switchGenerate.signal_switch, ECGUI.windowLBPH.generateFaceData)
+    sigAda.adapt(ECGUI.windowLBPH.switchTrain.signal_switch, ECGUI.windowLBPH.trainFaceModel)
+    #sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
+    
     sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.updateFrame)
     
     sigAda.adapt(ECGUI.switchCapture.signal_switch, thdm.servEC.getSignal)

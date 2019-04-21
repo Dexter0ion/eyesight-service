@@ -11,12 +11,14 @@ from Widget.QSwitchButton import QSwitchButton
 from Widget.QObjectList import QObjectList
 from WindowLBPH import WindowLBPH
 
+import sys
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         #LBPH视窗
         self.windowLBPH = WindowLBPH()
         self.initGUI()
+        
         
     #显示关于界面
     def displayAbout(self):
@@ -26,8 +28,10 @@ class MainWindow(QMainWindow):
         print("About")
 
     def displayLBPH(self):
+
         self.windowLBPH.show()
         print("Window LBPH")
+
 
     def initGUI(self):
         self.switchFlag = {}

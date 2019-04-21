@@ -5,9 +5,8 @@ class ServCapture():
     camera_cv = None
     frame = None
 
-    def __init__(self, camera_index):
-        self.setCamera(camera_index)
-    
+    def __init__(self):
+        pass
 
     def __str__(self):
         return 'ServCapture:Class to capture video frame'
