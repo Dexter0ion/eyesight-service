@@ -53,7 +53,9 @@ class WindowLBPH(QMainWindow):
         self.switchTrain = QSwitchButton("", "")
         self.switchTrain.setSwitchName("Train")
 
-        self.switchSets = [self.switchGenerate, self.switchTrain]
+        self.switchLBPH = QSwitchButton("", "")
+        self.switchLBPH.setSwitchName("LBPH")
+        self.switchSets = [self.switchGenerate, self.switchTrain, self.switchLBPH]
 
         for switch in self.switchSets:
             switch.setFixedSize(80, 80)

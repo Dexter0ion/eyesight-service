@@ -8,6 +8,9 @@ import numpy as np
 from PIL import Image
 
 class ServFaceRecogLBPH():
+    inframe = None
+    outframe = None
+
     def __init__(self):
         #面部&眼部级联分类器
         self.face_cascade = cv2.CascadeClassifier(
@@ -64,7 +67,7 @@ class ServFaceRecogLBPH():
         camera = cv2.VideoCapture(0)
         count = 0
 
-        while (count < 50):
+        while (count < 300):
             ret, frame = camera.read()
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)  #min max
@@ -92,12 +95,61 @@ class ServFaceRecogLBPH():
 
         camera.release()
         cv2.destroyAllWindows()
+    
+    def initRecognizer(self,cam):
+        # 加载先前训练的面部识别器
+        self.recognizer = cv2.face.LBPHFaceRecognizer_create()
+        self.recognizer.read(self.modelpath+'/trainer.xml')
 
-    def getin(self):
-        pass
+        # 加载面部级`联分类器
+        
+        #self.cascadePath = "cascades/haarcascade_frontalface_default.xml"
+        #self.cascadePath = "cascades/haarcascade_upperbody.xml"
+        #self.faceCascade = cv2.CascadeClassifier(self.cascadePath)
+
+        # 显示字体
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+
+        # 姓名标记 Master：0
+        self.names = ['Master', 'juju']
+
+        # 定义最小面部识别大小
+        self.minW = 0.1*cam.get(3)
+        self.minH = 0.1*cam.get(4)
+
+
+    def getin(self, frame):
+        self.inframe = frame
 
     def process(self):
-        pass
+
+        self.outframe = self.inframe
+        gray = cv2.cvtColor(self.outframe, cv2.COLOR_BGR2GRAY)
+        faces = self.face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.2,
+            minNeighbors=5,
+            minSize=(int(self.minW), int(self.minH)),
+        )
+        for(x, y, w, h) in faces:
+            cv2.rectangle(self.outframe, (x, y), (x+w, y+h), (0, 255, 0), 2)
+
+            id, confidence = self.recognizer.predict(gray[y:y+h, x:x+w])
+
+            # Check if confidence is less them 100 ==> "0" is perfect match
+            if (confidence < 100):
+                id = self.names[id]
+                confidence = "  {0}%".format(round(100 - confidence))
+            else:
+                id = "unknown"
+                confidence = "  {0}%".format(round(100 - confidence))
+
+            #draw rect
+            
+            cv2.putText(self.outframe, str(id), (x+5, y-5),
+                        self.font, 1, (255, 255, 255), 2)
+            cv2.putText(self.outframe, str(confidence), (x+5, y+h-5),
+                        self.font, 1, (255, 255, 0), 1)
 
     def out(self):
-        pass
+        return self.outframe

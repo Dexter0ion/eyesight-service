@@ -71,7 +71,11 @@ class ServEC(QThread):
         self.servCapture = ServCapture()
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
+
+        #LBPH
         self.servFaceRecogLBPH = ServFaceRecogLBPH()
+
+
         self.servYOLO = ServYOLO()
         self.servUDP = ServUDP('127.0.0.1',1082)
         self.switchFlag['Capture'] = True
@@ -79,6 +83,7 @@ class ServEC(QThread):
         self.switchFlag['Net'] = False
         self.switchFlag['YOLO'] = False
         self.switchFlag['UDPLive'] = False
+        self.switchFlag['LBPH'] = False
 
         #print(self.servCapture)
         print(self.servFaceRecog)
@@ -94,6 +99,9 @@ class ServEC(QThread):
             self.servOut(self.servFaceRecog)
         if self.switchFlag['YOLO'] == True:
             self.servOut(self.servYOLO)
+        if self.switchFlag['LBPH'] == True:
+            self.servFaceRecogLBPH.initRecognizer(self.servCapture.returnCamera())
+            self.servOut(self.servFaceRecogLBPH)
         if self.switchFlag['UDPLive'] == True:
             self.servUDP.getin(self._frame)
             self.servUDP.process()
@@ -192,9 +200,13 @@ if __name__ == '__main__':
     #LBPH WINDOW
     sigAda.adapt(ECGUI.windowLBPH.switchGenerate.signal_switch, ECGUI.windowLBPH.generateFaceData)
     sigAda.adapt(ECGUI.windowLBPH.switchTrain.signal_switch, ECGUI.windowLBPH.trainFaceModel)
+    sigAda.adapt(ECGUI.windowLBPH.switchLBPH.signal_switch, thdm.servEC.getSignal)
+    
     #sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
     
+    #Video Stream
     sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.updateFrame)
+    sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
     
     sigAda.adapt(ECGUI.switchCapture.signal_switch, thdm.servEC.getSignal)
     sigAda.adapt(ECGUI.switchFace.signal_switch, thdm.servEC.getSignal)
