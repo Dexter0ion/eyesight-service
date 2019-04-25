@@ -100,7 +100,8 @@ class ServEC(QThread):
         if self.switchFlag['YOLO'] == True:
             self.servOut(self.servYOLO)
         if self.switchFlag['LBPH'] == True:
-            self.servFaceRecogLBPH.initRecognizer(self.servCapture.returnCamera())
+
+            #self.servFaceRecogLBPH.initRecognizer(self.servCapture.returnCamera())
             self.servOut(self.servFaceRecogLBPH)
         if self.switchFlag['UDPLive'] == True:
             self.servUDP.getin(self._frame)
@@ -201,7 +202,8 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.windowLBPH.switchGenerate.signal_switch, ECGUI.windowLBPH.generateFaceData)
     sigAda.adapt(ECGUI.windowLBPH.switchTrain.signal_switch, ECGUI.windowLBPH.trainFaceModel)
     sigAda.adapt(ECGUI.windowLBPH.switchLBPH.signal_switch, thdm.servEC.getSignal)
-    
+    sigAda.adapt(ECGUI.windowLBPH.swicthCutPortrait.signal_switch, thdm.servEC.servFaceRecogLBPH.getSignal)
+    sigAda.adapt(ECGUI.windowLBPH.swicthPostPortrait.signal_switch, thdm.servEC.servFaceRecogLBPH.getSignal)
     #sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
     
     #Video Stream

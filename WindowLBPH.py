@@ -55,10 +55,17 @@ class WindowLBPH(QMainWindow):
 
         self.switchLBPH = QSwitchButton("", "")
         self.switchLBPH.setSwitchName("LBPH")
-        self.switchSets = [self.switchGenerate, self.switchTrain, self.switchLBPH]
+
+        self.swicthCutPortrait = QSwitchButton("", "")
+        self.swicthCutPortrait.setSwitchName("CutPortrait")
+
+
+        self.swicthPostPortrait = QSwitchButton("", "")
+        self.swicthPostPortrait.setSwitchName("PostPortrait")
+        self.switchSets = [self.switchGenerate, self.switchTrain, self.switchLBPH,self.swicthCutPortrait,self.swicthPostPortrait]
 
         for switch in self.switchSets:
-            switch.setFixedSize(80, 80)
+            switch.setFixedSize(150, 150)
             self.layout.addWidget(switch)
         #set central widget
         self.centralWidget = QWidget()

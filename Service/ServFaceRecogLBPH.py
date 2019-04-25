@@ -5,7 +5,10 @@
 import cv2
 import os
 import numpy as np
+import json
+from Service.ServHttp import ServHttp
 from PIL import Image
+import base64
 
 class ServFaceRecogLBPH():
     inframe = None
@@ -21,6 +24,11 @@ class ServFaceRecogLBPH():
         self.path = 'facedatasLBPH'
         #训练模型数据集
         self.modelpath = 'modelLBPH'
+
+        self.switchFlag = {}
+        self.switchFlag['CutPortrait'] = False
+        self.switchFlag['PostPortrait'] = False
+        self.initRecognizer(None)
 
     def __str__(self):
         return "This is a face recognition service using LBPH method"
@@ -96,16 +104,17 @@ class ServFaceRecogLBPH():
         camera.release()
         cv2.destroyAllWindows()
     
+    def getSignal(self, signal_dict):
+        print(signal_dict)
+        key = signal_dict['signal_key']
+        value = signal_dict['signal_value']
+        self.switchFlag[key] = value
+
+    
     def initRecognizer(self,cam):
         # 加载先前训练的面部识别器
         self.recognizer = cv2.face.LBPHFaceRecognizer_create()
         self.recognizer.read(self.modelpath+'/trainer.xml')
-
-        # 加载面部级`联分类器
-        
-        #self.cascadePath = "cascades/haarcascade_frontalface_default.xml"
-        #self.cascadePath = "cascades/haarcascade_upperbody.xml"
-        #self.faceCascade = cv2.CascadeClassifier(self.cascadePath)
 
         # 显示字体
         self.font = cv2.FONT_HERSHEY_SIMPLEX
@@ -114,8 +123,8 @@ class ServFaceRecogLBPH():
         self.names = ['Master', 'juju']
 
         # 定义最小面部识别大小
-        self.minW = 0.1*cam.get(3)
-        self.minH = 0.1*cam.get(4)
+        self.minW = 0.1*cv2.VideoCapture(0).get(3)
+        self.minH = 0.1*cv2.VideoCapture(0).get(4)
 
 
     def getin(self, frame):
@@ -145,11 +154,68 @@ class ServFaceRecogLBPH():
                 confidence = "  {0}%".format(round(100 - confidence))
 
             #draw rect
-            
+            this_name = str(id)
             cv2.putText(self.outframe, str(id), (x+5, y-5),
                         self.font, 1, (255, 255, 255), 2)
             cv2.putText(self.outframe, str(confidence), (x+5, y+h-5),
                         self.font, 1, (255, 255, 0), 1)
 
+            
+            #save&cur portrait
+            if self.switchFlag['CutPortrait'] == True:
+                self.cutPortrait(x, y, w, h, this_name)
+
+        #post portrait
+        if self.switchFlag['PostPortrait'] == True:
+            #init portrait dict
+            
+            portraits = {"plist":[]}
+            #load portrait
+            print("[Load Portrait]")
+            for portrait in os.listdir(r"./portrait"):              
+                pname = portrait[:-4]
+                print('./portrait/'+portrait)
+                with open('./portrait/'+portrait, 'rb') as f:
+                     img=base64.b64encode(f.read())
+                pdata = img.decode('utf-8') #将image2str转为str
+                '''
+                pdata = cv2.imread('./portrait/'+portrait)
+                '''
+                print("pdata type="+str(type(pdata)))
+                
+                #ndarray to list
+                #pdata = pdata.tolist()
+                print("pdata type="+str(type(pdata)))
+                #add to dict
+                tmpPDict={"name":pname,"data":pdata}
+                portraits["plist"].append(tmpPDict)
+                #print("portraits dict:"+str(portraits))
+            print("[Load Portrait]-PASS") 
+            print('[Post Portraits JSON]') 
+            pJson = json.dumps(portraits)
+            #print(pJson)
+            post_portrait = ServHttp('POST','http://127.0.0.1:5000/api/portrait',portraits)
+            try:
+                post_portrait.process()
+            except:
+                print("[Portraits Json]-传输失败")
+            else:
+                print("[Portraits Json]-传输成功")   
+
+     
+    def cutPortrait(self, x, y, w, h, this_name):
+        print("x:"+str(x)+"y:"+str(y)+"w:"+str(w)+"h:"+str(h)+"w-x:"+str(w-x)+"h-y:"+str(h-y))
+        print(this_name)
+        try:
+
+            self.single_protrait = cv2.resize(self.outframe[y:y+h,x:x+w],
+                                           (w, h))
+        except:
+            print("resize error")
+        else:
+            cv2.imwrite('portrait/%s.jpg' % this_name,
+                       self.single_protrait)
+            print("self.self.outframe resized-write2file")
+            
     def out(self):
         return self.outframe
