@@ -74,7 +74,7 @@ class ServEC(QThread):
 
         #LBPH
         self.servFaceRecogLBPH = ServFaceRecogLBPH()
-
+       
 
         self.servYOLO = ServYOLO()
         self.servUDP = ServUDP('127.0.0.1',1082)

@@ -1,4 +1,8 @@
 ## 功能迭代
+May 2019
+
+UI定型
+
 April 2019 
 
 ### Portrait传输

@@ -59,24 +59,35 @@ class MainWindow(QMainWindow):
         self._imgtext = ""
 
         # 监视屏大小
-        self.circleScale = 400
+        self.circleScale = 500
         self.switchFlag['Mask'] = False
         #self.masktype = 1
 
+        # slider监视窗大小调整
+        self.slider = QSlider(Qt.Vertical,self)
+        self.slider.setTickPosition(QSlider.TicksBothSides)
+        self.slider.valueChanged.connect(self.changeValueCircle)
+        
         # 界面布局
         self.layout = QHBoxLayout()
+        
+        frameLeft = QFrame()
+        self.layoutLeft = QVBoxLayout()
+
         # Add QLabel
         self.ilabel = QLabel()
         self.ilabel.setPixmap(self._pixmap)
-        self.layout.addWidget(self.ilabel)
+        
+        frameCapture = QFrame()
+        frameCapture.setFrameShape(QFrame.Box)
+        layoutCapture = QHBoxLayout()
+        layoutCapture.addWidget(self.slider)
+        layoutCapture.addWidget(self.ilabel)
+        frameCapture.setLayout(layoutCapture)
 
-        # Add QSimple Console
-        self.console = QSimpleConsole()
-        self.layout.addWidget(self.console)
+        
+        self.layoutLeft.addWidget(frameCapture)
 
-        # Add ObjectList
-        self.objectList = QObjectList()
-        self.layout.addWidget(self.objectList)
 
         # Add SwitchButton
         self.switchEC = QSwitchButton("", "")
@@ -111,9 +122,43 @@ class MainWindow(QMainWindow):
             self.switchYolo, self.switchMask, self.switchCutObj,self.switchPostObj,self.switchUDPLive
         ]
 
+
+        layoutSwitch = QHBoxLayout() 
+        
         for switch in self.switchSets:
             switch.setFixedSize(80, 80)
-            self.layout.addWidget(switch)
+            #spltSwitch.addWidget(switch)
+            layoutSwitch.addWidget(switch)
+
+        frameSwitch = QFrame()
+        frameSwitch.setFrameShape(QFrame.Box)
+        frameSwitch.setLayout(layoutSwitch)
+
+        self.layoutLeft.addWidget(frameSwitch)
+
+        # Add QSimple Console
+        self.console = QSimpleConsole()
+        self.layoutLeft.addWidget(self.console)
+
+        frameLeft.setLayout(self.layoutLeft)
+        self.layout.addWidget(frameLeft)
+
+
+        frameRight = QFrame()
+        layoutRight = QVBoxLayout()
+        
+        # Add ObjectList
+        self.objectList = QObjectList()
+        self.btnReload=QPushButton("Reload")
+        self.btnReload.clicked.connect(self.objectList.reloadDataSource)
+        layoutRight.addWidget(self.objectList)
+        layoutRight.addWidget(self.btnReload)
+        frameRight.setLayout(layoutRight)
+        self.layout.addWidget(frameRight)
+
+
+
+
         #set central widget
         self.centralWidget = QWidget()
         self.centralWidget.setLayout(self.layout)
@@ -137,6 +182,10 @@ class MainWindow(QMainWindow):
         self._pixmap = mask_image(self.switchFlag['Mask'], self._imgdata,
                                   self.circleScale)
         self.ilabel.setPixmap(self._pixmap)
+    
+    def changeValueCircle(self, value):
+        self.circleScale  = value*6
+        pass
 
 
 def mask_image(masktype, imgdata, size, imgtype='jpg'):
