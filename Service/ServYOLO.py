@@ -8,6 +8,7 @@ import numpy as np
 import json
 from Service.ServHttp import ServHttp
 
+from Service.MessageSender import MessageSender
 
 class ServYOLO():
     # Initialize the parameters
@@ -45,6 +46,8 @@ class ServYOLO():
         self.switchFlag = {}
         self.switchFlag['CutObj'] = False
         self.switchFlag['PostObj'] = False
+        self.msgSender = MessageSender()
+        
 
     def __str__(self):
         return "ServYOLO:Service-YOLO-ObjectDetect"
@@ -109,7 +112,7 @@ class ServYOLO():
         #Display the label at the top of the bounding box
 
         labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_SIMPLEX,
-                                             0.5, 1)
+                                             0.1, 1)
         top = max(top, labelSize[1])
 
         #Draw Prediction
@@ -155,6 +158,7 @@ class ServYOLO():
         print(signal_dict)
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
+        self.msgSender.sendMessage("["+key+"]"+ "-status:"+str(value))
         self.switchFlag[key] = value
 
     def switchEnable(self, ename, estatus):
@@ -218,9 +222,13 @@ class ServYOLO():
         for id, cnt in enumerate(self.cntClassIds):
             if cnt != 0:
                 print("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
+
+                #msgSender
+                self.msgSender.sendMessage("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
+
                 tmpIdDict = {"id": id, "name": self.classes[id], "cnt": cnt}
                 classIdDict["idlist"].append(tmpIdDict)
-                #self.msgSender.sendMessage("Id:%s,Name:%s,Cnt:%s" % (id, self.classes[id], cnt))
+
             self.cntClassIds[id] = 0
         classIdJson = json.dumps(classIdDict)
         print(classIdJson)

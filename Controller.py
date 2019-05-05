@@ -28,6 +28,11 @@ from Service.ServYOLO import ServYOLO
 from Service.ServUDP import ServUDP
 from Service.ServFaceRecogLBPH import ServFaceRecogLBPH
 
+from Service.MessageSender import MessageSender
+
+#TEMP_VIDEOPATH = 'video/car/car1.mp4'
+TEMP_VIDEOPATH = 0
+
 class ServNet(QThread):
     servFlask = ServFlask()
     signal_netcmd = pyqtSignal(str)
@@ -72,6 +77,8 @@ class ServEC(QThread):
         #self.cap= cv2.VideoCapture(0)
         self.servFaceRecog = ServFaceRecog()
 
+        self.msgSender = MessageSender()
+
         #LBPH
         self.servFaceRecogLBPH = ServFaceRecogLBPH()
        
@@ -109,8 +116,12 @@ class ServEC(QThread):
 
     def getSignal(self, signal_dict):
         print(signal_dict)
+        
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
+
+        self.msgSender.sendMessage("["+key+"]"+ "-status:"+str(value))
+
         self.switchFlag[key] = value
         #print("key:"+key+" value:"+value)
 
@@ -129,7 +140,8 @@ class ServEC(QThread):
         self.servCapture.releaseCamera()
     def restart(self):
         self.servCapture.releaseCamera()
-        self.servCapture.setCamera(0)
+        #self.servCapture.setCamera(0)
+        self.servCapture.setCamera(TEMP_VIDEOPATH)
                 
             
 
@@ -150,6 +162,7 @@ class ThreadManager():
     servNet = ServNet()
     servEC = ServEC()
     switchFlag ={}
+    msgSender = MessageSender()
 
     def getSignal(self, signal_dict):
         print("[Thread Signal]")
@@ -157,20 +170,23 @@ class ThreadManager():
         
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
+        self.msgSender.sendMessage("["+key+"]"+ "-status:"+str(value))
         self.switchFlag[key] = value
 
         
         if self.switchFlag['EC'] == True:
-            self.servEC.servCapture.setCamera(0)
+            self.servEC.servCapture.setCamera(TEMP_VIDEOPATH)
             self.servEC.start()
             
             #self.servEC.restart()
         if self.switchFlag['EC'] == False:
             self.servEC.stop()
+        '''
         if self.switchFlag['Net'] == True:
             self.servNet.start()
         if self.switchFlag['Net'] == False:
             self.servNet.stop()
+        '''
         
 
 
@@ -206,6 +222,17 @@ if __name__ == '__main__':
     sigAda.adapt(ECGUI.windowLBPH.swicthPostPortrait.signal_switch, thdm.servEC.servFaceRecogLBPH.getSignal)
     #sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
     
+    #thdm msg
+    sigAda.adapt(thdm.msgSender.senderSignal, ECGUI.getMsgSenderSignal)
+    #servEC msg
+    sigAda.adapt(thdm.servEC.msgSender.senderSignal, ECGUI.getMsgSenderSignal)
+
+    #ECGUI msg
+    sigAda.adapt(ECGUI.msgSender.senderSignal, ECGUI.getMsgSenderSignal)
+
+    #Yolo msg
+    sigAda.adapt(thdm.servEC.servYOLO.msgSender.senderSignal, ECGUI.getMsgSenderSignal)
+
     #Video Stream
     sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.updateFrame)
     sigAda.adapt(thdm.servEC.signal_QImage, ECGUI.windowLBPH.updateFrame)
@@ -224,6 +251,6 @@ if __name__ == '__main__':
         sigAda.adapt(switch.switchSignal,servMana.getSignal)
     '''
     #show MainWindow
-    ECGUI.resize(500, 400)
+    ECGUI.resize(1000, 600)
     ECGUI.show()
     app.exit(app.exec_())

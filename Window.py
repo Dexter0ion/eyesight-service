@@ -11,6 +11,7 @@ from Widget.QSwitchButton import QSwitchButton
 from Widget.QObjectList import QObjectList
 from WindowLBPH import WindowLBPH
 
+from Service.MessageSender import MessageSender
 import sys
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -36,9 +37,9 @@ class MainWindow(QMainWindow):
     def initGUI(self):
         self.switchFlag = {}
 
-        
+        self.msgSender = MessageSender()
         #设置窗口标题
-        self.setWindowTitle('Eyesight-Service')
+        self.setWindowTitle('Intelligent Monitoring System')
 
         #设置菜单栏
         self.menubar = self.menuBar()
@@ -118,7 +119,7 @@ class MainWindow(QMainWindow):
         self.switchUDPLive.setSwitchName("UDPLive")
 
         self.switchSets = [
-            self.switchEC,self.switchCapture, self.switchFace, self.switchNet,
+            self.switchEC,self.switchCapture, self.switchFace,
             self.switchYolo, self.switchMask, self.switchCutObj,self.switchPostObj,self.switchUDPLive
         ]
 
@@ -175,6 +176,10 @@ class MainWindow(QMainWindow):
         print(signal_dict)
         key = signal_dict['signal_key']
         value = signal_dict['signal_value']
+
+
+        self.msgSender.sendMessage("["+key+"]"+ "-status:"+str(value))
+        
         self.switchFlag[key] = value
 
     def updateFrame(self, imgdata):
@@ -186,6 +191,14 @@ class MainWindow(QMainWindow):
     def changeValueCircle(self, value):
         self.circleScale  = value*6
         pass
+    
+    def getMsgSenderSignal(self,msg):
+        print("get msg:"+msg)
+        self.print2Concole(msg)
+
+    def print2Concole(self,msg):
+        self.console.append(msg)
+
 
 
 def mask_image(masktype, imgdata, size, imgtype='jpg'):
