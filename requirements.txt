@@ -1,6 +1,6 @@
 face_recognition==1.2.3
 requests==2.18.4
 Flask==1.0.2
-opencv_contrib_python==3.4.5.20
+opencv_contrib_python==3.4.7.28
 numpy==1.15.4
 PyQt5==5.11.3
